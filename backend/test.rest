@@ -1,0 +1,20 @@
+###
+POST   http://localhost:3000/store/folder
+Content-Type: application/json
+
+{
+   "user":"123456",
+   "folder":"hello"
+   
+}
+
+
+
+5fe47e8efa98862ba422c9b6
+
+
+
+
+###
+Get http://localhost:3000/store/folder
+
