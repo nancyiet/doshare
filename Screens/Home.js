@@ -5,41 +5,108 @@ import {Header,Avatar,BottomSheet} from "react-native-elements";
 //import {BottomSheet} from "react-native-btr"
 import {useStateValue,useFolderValue} from "../Context/Usercontext";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {GetFolders,GetFiles} from "../Context/Action";
-//import OpenFile from 'react-native-doc-viewer';
+import {GetFolders,GetFiles,Notify,handleDownload,fileView,handleSocialShare,GetAllFiles} from "../Context/Action";
 import {GoogleSignin} from "@react-native-community/google-signin";
+import Util from "../globalStylesheet/Util";
+import { Alert } from "react-native";
+
+
 const Home = ({navigation})=>{
      
   const[{user},dispatch]=useStateValue();
- 
+  var RNFS = require('react-native-fs');
     const [{folders,files,isLoading},dispatch1]=useFolderValue();
   
     const [list,setlist]=React.useState([]);
     const [toggleMenu , setMenu]=React.useState({});
     const [loading,setLoading]=React.useState(false);
-    const bottomlist = [
+   const [open,setOpen]=React.useState(false);
+  
+  
+    const vertBottomSheet = [
         {
-            title:"Share",
-            titleStyle:{color:"#00BFFF"}
-        },
-        {
-            title:"Remove",
-            titleStyle:{color:"#00BFFF"},
-            onPress:(id)=>{handleRemove(id)}
-        },
-        {
-            title:"Download",
-            titleStyle:{color:"#00BFFF"}
+            title:"LogOut",
+            titleStyle:{color:"#fff",textAlign:"center",alignSelf:"center",fontFamily:"Lora-Bold"},
+            containerStyle:{backgroundColor:"#3e2465",borderRadius:60,marginTop:2},
+            onPress:()=>{console.log('logout');
+                logOut();}
         },
         {
             title:"Cancel",
-            containerStyle:{backgroundColor:"00BFFF"},
-            titleStyle:{color:"#fff"},
-            onPress:(id)=>{handleMenu(id)}
+            containerStyle:{backgroundColor:"#3e2465",borderRadius:60,marginTop:2 , },
+            titleStyle:{color:"#fff",textAlign:"center",alignSelf:"center",fontFamily:"Lora-Bold"},
+            onPress:()=>{setOpen(false);}
+            
+        },
+        
+    ]
+    const bottomlistforfolder = [
+        {
+            title:"Remove",
+            titleStyle:{color:"#fff",textAlign:"center",alignSelf:"center",fontFamily:"Lora-Bold"},
+            containerStyle:{backgroundColor:"#3e2465",borderRadius:60,marginTop:2},
+            onPress:(item)=>{console.log(item.type,item._id);
+                handleRemove(item.type,item._id)}
+        },
+        {
+            title:"Cancel",
+            titleStyle:{color:"#fff",textAlign:"center",alignSelf:"center",fontFamily:"Lora-Bold"},
+            containerStyle:{backgroundColor:"#3e2465",borderRadius:60,marginTop:2},
+            onPress:(item)=>{handleMenu(item._id)}
             
         }
     ]
+    const bottomlist = [
+        {
+            title:"Share",
+            titleStyle:{color:"#fff",textAlign:"center",alignSelf:"center",fontFamily:"Lora-Bold"},
+            containerStyle:{backgroundColor:"#3e2465",borderRadius:60,marginTop:2},
+            onPress:(item)=>{console.log(item._id);
+            handleShare(item);}
+        },
+        {
+            title:"Send a copy",
+            titleStyle:{color:"#fff",textAlign:"center",alignSelf:"center",fontFamily:"Lora-Bold"},
+            containerStyle:{backgroundColor:"#3e2465",borderRadius:60,marginTop:2},
+            onPress:(item)=>{console.log(item._id);
+                handleMenu(item._id);
+            handleSocialShare(item);}
+        },
+        {
+            title:"Remove",
+            titleStyle:{color:"#fff",textAlign:"center",alignSelf:"center",fontFamily:"Lora-Bold"},
+            containerStyle:{backgroundColor:"#3e2465",borderRadius:60,marginTop:2},
+            onPress:(item)=>{console.log(item.type,item._id);
+                handleRemove(item.type,item._id)}
+        },
+        {
+            title:"Download",
+            titleStyle:{color:"#fff",textAlign:"center",alignSelf:"center",fontFamily:"Lora-Bold"},
+            containerStyle:{backgroundColor:"#3e2465",borderRadius:60,marginTop:2},
+            onPress:(item)=>{console.log(item._id);
+                handleMenu(item._id);
+                  handleDownload(item._id,item.url,item.name)}
+        },
+        {
+            title:"Cancel",
+            titleStyle:{color:"#fff",textAlign:"center",alignSelf:"center",fontFamily:"Lora-Bold"},
+            containerStyle:{backgroundColor:"#3e2465",borderRadius:60,marginTop:2},
+            onPress:(item)=>{handleMenu(item._id)}
+            
+        }
+    ]
+
+   
+        
+   
+    function handleShare(item)
+    {
+        handleMenu(item._id);
+        navigation.navigate('ShareFile',{file:item});
+    }
+    
     const logOut=async()=>{
+        setOpen(false);
         dispatch({
             type:"SET_USER",
             user:null
@@ -55,82 +122,80 @@ const Home = ({navigation})=>{
          }
        
     }
-    function fileView(url,name,type)
-    {
-       
-       
-       /* OpenFile.openDoc([{
-            url:url,
-            fileName:name,
-            cache:false,
-            fileType:type
-          }], (error, url) => {
-             if (error) {
-             alert(error);
-               console.error(error);
-             } else {
-             alert('successful')
-               console.log(url)
-             }
-           })*/
-    }
+   
    React.useEffect(()=>{
-       if(navigation.getParam('folder'))
+       var ismounted = true;
+
+       if(ismounted && navigation.getParam('folder'))
        { 
-           console.log('folder')
+          // console.log('folder')
            setlist(prev=>[navigation.getParam('folder'),...prev]);
            navigation.setParams({'folder':null});
            GetFolders(user,dispatch1);
        }
-       if(navigation.getParam('files'))
+       if( ismounted && navigation.getParam('file'))
        { 
+         
           GetFiles(user,dispatch1);
+          GetAllFiles(user,dispatch1);
+            
+       }
+       return ()=>{
+           ismounted=false;
        }
 
    },[navigation])
 
   
    React.useEffect(()=>{
-   
+    var ismounted = true;
     function merge()
     {
        
         setlist([...folders,...files]);
-        console.log('home',files);
+        
     }
-   merge();
+   ismounted && merge();
+   return ()=>{
+    ismounted=false;
+}
    
    },[folders,files])
    
     function handleMenu(id){
           setMenu(prev=>({...prev,[id]:!prev[id]}));
+         // console.log(id,toggleMenu[id])
     }
     function handleRemove(type,id)
     {
+        handleMenu(id);
         console.log(type);
         setlist(prev=>{return prev.filter((item)=>{return item._id!=id})});
         if(type==='folder')
         {
-            fetch(`http://10.0.2.2:3000/store/folder/${id}`,{
+            fetch(`http://192.168.43.108:3000/folder/${id}`,{
                 method:"DELETE"
             })
             .then(res=>res.json())
             .then(folders=>{
                 GetFolders(user,dispatch1);
-                console.log(folders.data)}
+                //console.log(folders.data)
+            }
                 )
             .catch(err=>console.log(err));
         }
         else
         {
             console.log(type);
-            fetch(`http://10.0.2.2:3000/store/file/${user.homeId}/${id}`,{
+            fetch(`http://192.168.43.108:3000/file/${id}`,{
                 method:"DELETE"
             })
             .then(res=>res.json())
-            .then(files=>{
+            .then(file=>{
                 GetFiles(user,dispatch1);
-                console.log(files.data)}
+                GetAllFiles(user,dispatch1);
+               // console.log(file.data)
+            }
                 )
             .catch(err=>console.log(err));
         }
@@ -140,25 +205,51 @@ const Home = ({navigation})=>{
     return(
     <View style={styles.container}>
     
-    <Header
+    <Header  
+    rightComponent={<Icon type="feather"  name="more-vertical" onPress={()=>setOpen(true)} size={24} color="#3e2465"/>}
     leftComponent={  <Avatar
+       
         rounded
         source={{
           uri:
            user?user.photoUrl:"jewwww",
         }}
-         />} 
-         centerComponent={{text:" DoShare" , style:{color:"#00BFFF", fontFamily:"caveat-bold",
-         fontSize:20}}}
-         rightComponent={<Icon type="feather" name="log-out" onPress={logOut} size={20} color="#00BFFF"/>}
+               />} 
+         centerComponent={{text:" DoShare" , style:{color:"#694fad", fontFamily:"Lora-Bold",
+         fontSize:20,}}}
+         
          containerStyle={styles.header}
-         leftContainerStyle={{marginLeft:10,paddingVertical:15}}
-         rightContainerStyle={{marginRight:10 , paddingVertical:15}}
+         leftContainerStyle={{marginLeft:10,}}
+         rightContainerStyle={{marginRight:10 }}
          
     />
-  
+   <BottomSheet isVisible={open} containerStyle={{
+                 backgroundColor:'rgba(0.5,0.25,0,0.2)'
+             }}>
+                 {
+                    vertBottomSheet.map((l,i)=>(
+                        <ListItem key={i} containerStyle={l.containerStyle} onPress={()=>l.onPress()}>
+                        <ListItem.Content >
+                        
+                            <ListItem.Title style={l.titleStyle} >
+                                {l.title}
+                            </ListItem.Title>
+                        </ListItem.Content>
+                        </ListItem>
+                    )) 
+                 }
+             </BottomSheet>
 
-    {!isLoading?
+    {
+    isLoading?
+      <View style={{
+        flex:1,
+        alignItems:"center",
+        justifyContent:"center",
+        
+    }}><ActivityIndicator size="large" color="#694fad"/></View>
+     :
+    (!isLoading && list.length)?
           <View style={styles.listContainer}>
        <FlatList 
       keyExtractor={item=>item._id}
@@ -166,65 +257,92 @@ const Home = ({navigation})=>{
        numColumns={2}
        renderItem={({item})=>{
         
-       
+        const arr = item.name.split('.');
+        const len = arr.length;
+        const type = arr[len-1];
         
            return(
            <View  style={styles.list}>
-           
-           <TouchableOpacity   onPress={()=>
-            { console.log('start');
-                fileView(item.url,item.name,item.type)
-           }}>
-              {
-                 
-                  item.type==='folder'?
-                  <Image source={require('../assets/folder.png')} style={styles.img}/>
-            :item.type==='png'?<Image source={{uri:item.url}} style={styles.img}/>
-            :item.type==='jpg'?<Image source={{uri:item.url}} style={styles.img}/>
-            :item.type==='jpeg'?<Image source={{uri:item.url}} style={styles.img}/> 
-             : 
-             <Image source={require('../assets/file.jpg')} style={styles.img}/>
+           {
+               item.type==='folder'?
+               <TouchableOpacity onPress={()=>navigation.navigate('Folder',{id:item._id,name:item.name})}>
+                   <Image source={require('../assets/folder.png')} style={styles.file}/> 
+               </TouchableOpacity>
+               :(type==='png'||type==='jpg'||type==='jpeg'||type==='svg')?
+               <TouchableOpacity style={styles.imgthu} onPress={()=> fileView(item.url,item.name,item.type)}>
+              <Image source={{uri:item.url}} style={styles.img} /> 
+           </TouchableOpacity>:
+            type==='mp3'?<TouchableOpacity style={styles.imgthu} onPress={()=> fileView(item.url,item.name,item.type)}>
+            <Image source={require('../assets/mp3.png')} style={styles.img}/>
+      </TouchableOpacity>:
+       type==='mp4'?<TouchableOpacity style={styles.imgthu} onPress={()=> fileView(item.url,item.name,item.type)}>
+     <Image source={require('../assets/mp4.png')} style={styles.img}/> 
+  </TouchableOpacity>
+           :<TouchableOpacity style={styles.imgthu} onPress={ ()=>fileView(item.url,item.name,item.type)}>
+               <Image source={require('../assets/file.jpg')} style={styles.img}/>
             
-              }
-              
            </TouchableOpacity>
+           }
+           
 
                  <View style={styles.setting}>
-              <Text style={styles.textStyle}>{item.name}</Text>
+              <Text numberOfLines={1} style={styles.textStyle}>{item.name}</Text>
                
-              <Icon
-              onPress={()=>handleMenu(item._id)}
-            size={14}
+             <TouchableOpacity onPress={()=>handleMenu(item._id)}>
+             <Icon
+            size={15}
             color="black"
             name='dots-three-vertical'
             type='entypo'/>
+             </TouchableOpacity>
+                 
              
              <BottomSheet isVisible={toggleMenu[item._id]} containerStyle={{
                  backgroundColor:'rgba(0.5,0.25,0,0.2)'
              }}>
                {
-                   bottomlist.map((l,i)=>{
-                       <ListItem key={i} containerStyle={l.containerStyle} onPress={l.onPress}>
+                   item.type=='folder'?  bottomlistforfolder.map((l,i)=>(
+                    <ListItem key={i} containerStyle={l.containerStyle} onPress={()=>l.onPress(item)}>
+                    <ListItem.Content>
+                        <ListItem.Title style={l.titleStyle} >
+                            {l.title}
+                        </ListItem.Title>
+                    </ListItem.Content>
+                    </ListItem>
+                ))
+                   :
+                   bottomlist.map((l,i)=>(
+                       <ListItem key={i} containerStyle={l.containerStyle} onPress={()=>l.onPress(item)}>
                        <ListItem.Content>
                            <ListItem.Title style={l.titleStyle} >
                                {l.title}
                            </ListItem.Title>
                        </ListItem.Content>
                        </ListItem>
-                   })
+                   ))
                }
              </BottomSheet>
+            
              </View>
              </View>
        )}}
        /> 
-           
-      </View>:<View style={{
-          alignItems:"center",
-          justifyContent:"center"
-      }}><ActivityIndicator size="large"/></View>}
+          
+      </View>:
+      <View style={{
+        flex:1,
+        alignItems:"center",
+        justifyContent:"center",
+        top:"40%"
+        
+    }} >
+         <Text style={styles.textStyle}>No Items</Text>
+         </View>
+}
+
+  </View> 
       
-    </View>
+      
     );
 }
 
@@ -234,11 +352,10 @@ const styles = StyleSheet.create({
        padding:10,
        width:"100%",
        height:"100%",
-      
-       
+       backgroundColor:"#fff",
     },
     listContainer:{
-       flex:1,
+       flex:0.90,
        marginVertical:30,
       
     
@@ -247,16 +364,20 @@ const styles = StyleSheet.create({
 
         
         flexDirection:"column",
-        marginHorizontal:35,
+        marginHorizontal:30,
         justifyContent:"space-evenly",
         marginVertical:10,
         flexGrow:1,
        
     },
-    img:{
+    file:{
         width:100,
         height:100,
-       
+    },
+    img:{
+        width:80,
+        height:80,
+      
         
     },
     setting:{
@@ -265,15 +386,16 @@ const styles = StyleSheet.create({
       justifyContent:"space-between",
       alignItems:"center",
       paddingVertical:15,
-      width:100,
+      width:110,
       
     },
     textStyle:{
         flex:1,
-        fontFamily:"caveat-bold",
-        fontSize:15,
+        fontFamily:"Lora-Bold",
+        fontSize:12,
         marginLeft:5,
-        flexWrap:"wrap"
+        flexWrap:"wrap",
+        
     },
     BottomSheet:{
         backgroundColor:"#fff",
@@ -291,25 +413,35 @@ const styles = StyleSheet.create({
        
     },
     header:{
-        backgroundColor:"#FFF",        
-       
+        backgroundColor:"#FFF",       
         shadowColor:"#fff",
       overflow: 'hidden',
       shadowOpacity: 0.5,
     borderRadius:6,
       borderWidth:1,
-borderColor:"#fff",
-shadowOffset:{width:0,height:1},
-shadowRadius:3,
-elevation:5,
-marginTop:30,
-flexDirection:"row",
-justifyContent:"space-around",
-alignItems:"center",
-paddingVertical:15,
-height:60,
-
-    }
+   borderColor:"#fff",
+     shadowOffset:{width:0,height:1},
+     shadowRadius:3,
+      elevation:5,
+       
+   flexDirection:"row",
+  justifyContent:"center",
+    alignItems:"center",
+  
+   
+   
+    },
+    imgthu:{
+        width:100,
+        height:100,
+        borderRadius:5,
+        borderColor:"#ddd",
+        borderWidth:1,
+        alignItems:"center",
+        justifyContent:"center"
+        
+    },
+   
    
 })
 

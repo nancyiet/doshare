@@ -5,7 +5,10 @@ const app = express();
 const cors = require("cors");
 const mongoose = require("mongoose");
 const userRoute = require("./Routes/user");
-const storeRoute = require("./Routes/store");
+const folderRoute = require("./Routes/folder");
+const shareRoute = require("./Routes/share");
+const fileRoute = require("./Routes/file")
+const searchRoute = require("./Routes/search");
 const url = process.env.MONGOURL;
 
 app.use(bodyParser.urlencoded({ extended: false }))
@@ -28,8 +31,10 @@ connection.once('open',()=>{
 //routes
 
 app.use("/user",userRoute);
-app.use("/store",storeRoute);
-
+app.use("/folder",folderRoute);
+app.use("/share",shareRoute);
+app.use("/file",fileRoute);
+app.use("/search",searchRoute);
 
 
 

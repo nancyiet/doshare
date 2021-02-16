@@ -1,6 +1,6 @@
 const router = require("express").Router();
 const User = require("../Models/user");
-const Store = require("../Models/store");
+const Folder = require("../Models/folder");
 const bodyParser = require("body-parser");
 const jsonParser = bodyParser.json();
 
@@ -12,7 +12,7 @@ router.post("/",jsonParser,(req,res)=>{
        
         if(err)
         {
-           
+           console.log(err);
             res.status(401).send(err);
         }
          else if(!found)
@@ -33,10 +33,10 @@ router.post("/",jsonParser,(req,res)=>{
                 {
                     console.log(user);
                   
-                        const folder = new Store({
+                        const folder = new Folder({
                             userId:user._id,
                             name:`home-${user._id}`,
-                            files:[],
+                           
                         })
                         folder.save().then(fd=>{
                             console.log(fd)
@@ -61,7 +61,7 @@ router.post("/",jsonParser,(req,res)=>{
         }
         else
         {
-           
+           console.log("found");
             res.status(200).send(found);
         }
     })

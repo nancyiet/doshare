@@ -186,12 +186,16 @@ android {
 dependencies {
     implementation fileTree(dir: "libs", include: ["*.jar"])
     //noinspection GradleDynamicVersion
+   // implementation 'androidx.multidex:multidex:2.0.1'
+   implementation project(':react-native-fs')
+   implementation project(':react-native-push-notification')
+   implementation project(':react-native-background-downloader')
     implementation "com.facebook.react:react-native:+"  // From node_modules
    implementation project(':react-native-vector-icons')
     implementation "androidx.swiperefreshlayout:swiperefreshlayout:1.0.0"
 implementation platform('com.google.firebase:firebase-bom:26.3.0')
 implementation 'com.google.firebase:firebase-analytics'
-
+ implementation project(':react-native-doc-viewer')
     debugImplementation("com.facebook.flipper:flipper:${FLIPPER_VERSION}") {
       exclude group:'com.facebook.fbjni'
     }

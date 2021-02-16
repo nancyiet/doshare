@@ -11,11 +11,14 @@ import {initialState} from "../Context/Reducer";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Folder from "../Screens/Folder";
 import storage from '@react-native-firebase/storage';
-import { Alert } from "react-native";
+import { Alert,View,Text } from "react-native";
 import DocumentPicker from 'react-native-document-picker';
-   
+import ShareFile from '../Components/ShareFile'; 
+import Search from "../Screens/Search";
+import {Notify} from "../Context/Action";
 
 async function sendDocument(navigation){
+     
     try{
         var user = await AsyncStorage.getItem('user')
        user =  JSON.parse(user);
@@ -30,70 +33,82 @@ async function sendDocument(navigation){
     try{
           const file = await DocumentPicker.pick({
               type:[DocumentPicker.types.allFiles],
+     
           })
-   
-        
-                if(file && homeId)
+    
+            // console.log(file,file.size/1000000);
+                if(file && homeId && file.size<=100000000)
                 {
+                    Notify(file.name,"uploading! please wait.")
                     const uploaduri = file.uri;
-                    let filename = uploaduri.substring(uploaduri.lastIndexOf('/')+1);
-                    const extention = filename.split('.').pop();
-                    const name = filename.split('.').slice(0,-1).join('.');
+                    let filename = file.name;
+                    const array = filename.split('.');
+                    const len = array.length;
+                    const extention = array[len-1];
+                    const name = array[0]; 
                     filename = name+Date.now()+'.'+extention;
                     const task = storage().ref(filename).putFile(uploaduri);
                     task.on('state_changed', taskSnapshot => {
-                     console.log(`${taskSnapshot.bytesTransferred} transferred out of ${taskSnapshot.totalBytes}`);
-                     const percentage = Math.round(taskSnapshot.bytesTransferred/taskSnapshot.totalBytes)*100;
-                     Alert.alert(percentage+"% of file uploaded");
-      
+                        const percentage = Math.round((taskSnapshot.bytesTransferred/taskSnapshot.totalBytes)* 100 + Number.EPSILON );
+                        console.log(percentage,taskSnapshot.bytesTransferred/taskSnapshot.totalBytes);
+                        const Size = Math.round((file.size/1000000)*100+Number.EPSILON);
+                        Alert.alert(file.name,percentage+`% of ${Size/100} MB uploaded!`);
+         
                     });
           
            try{
                 await task;
-                Alert.alert('file uploaded!' ,'Your file has been uploaded to firebase successfully! ')
+               // Alert.alert('file uploaded!' ,'Your file has been uploaded to firebase successfully! ')
                 const url = await storage()
                 .ref(filename)
                 .getDownloadURL();
-                alert(url);
+               // alert(url);
            
        
           try{
-            await fetch("http://10.0.2.2:3000/store/file",{
+            await fetch("http://192.168.43.108:3000/file",{
               method:"POST",
              headers:{"Content-Type":"application/json"},
           body:JSON.stringify({
               url:url,
               name:file.name,
-              type:extention,
-              id:homeId
+              type:file.type,
+              folderId:homeId,
+              userId: user._id,
+              filename,
           }),
           }).then(res=>res.json())
-            .then(data=>{console.log(data.data.files);
-                 
-                   navigation.navigate('Home',{files:data.data.files});
+            .then(data=>{console.log(data.data);
+                 Notify(file.name,"Uploaded successfully!")
+                   navigation.navigate('Home',{file:data.data});
              });
           }
           catch(err)
           {
                  console.log("Error",err);
+                 Notify(`Error while uploading ${file.name}`,err.message)
           }
         }
         catch(err)
         {
-           alert(err.message);
+           console.log(err.message);
+           Notify(`Error while uploading ${file.name}`,"Something went wrong!")
         }
             
    
+}
+else{
+    Notify(file.name,"size must not exceed 100mb!");
 }
 }
 catch(err)
 {
     if(DocumentPicker.isCancel(err))
     {
-        alert(err.message);
+        console.log(err.message);
     }
     else{
-        alert(err.message);
+        console.log(err.message);
     }
     
 }
@@ -111,53 +126,75 @@ const BottomTab = createMaterialBottomTabNavigator({
    
     Home : {screen:Home ,
         navigationOptions:{
-           
-            tabBarIcon:()=><Icon
-           reverse
-            size={12}
-            color="#00BFFF"
+           // tabBarLabel:"Home",
+            tabBarIcon:({tintColor})=>
+                <Icon
+          
+            size={22}
+            color={tintColor}
             name='home'
             type='font-awesome'/>,
-           tabBarAccessibilityLabel:"Home"
+           
         }  
     },
     Add:{screen:()=>null, 
         
 
         navigationOptions:{
+           // tabBarLabel:"Create Folder",
+            tabBarIcon:({tintColor})=>
             
-            tabBarIcon:()=><Icon
-            reverse
-            size={12}
-            color="#00BFFF"
-            name='plus'
-            type='font-awesome'/>,
-            tabBarOnPress:({navigation})=>{console.log("pressed");
+             <Icon
+            size={22}
+            color={tintColor}
+            name='folder-plus'
+            type='font-awesome-5'/>,
+            tabBarOnPress:({navigation})=>{
              navigation.navigate("Modal")
         }
         }},
-    Shared:{screen:Shared,
+        Search:{
+            screen:Search,
+            navigationOptions:{
+                // tabBarLabel:"Create Folder",
+                 tabBarIcon:({tintColor})=>
+                 
+                  <Icon
+                 size={22}
+                 color={tintColor}
+                 name='search'
+                 type='font-awesome-5'/>,
+             }
+        }
+        ,
+    Shared:{screen:()=>null,
         navigationOptions:{
+            //tabBarLabel:"Shared",
+            tabBarIcon:({tintColor})=>
            
-            tabBarIcon:()=><Icon
-
-            reverse
-            color="#00BFFF"
-            size={12}
+             <Icon
+           
+            color={tintColor}
+            size={22}
             name='users'
-            type='font-awesome'/>,
-           
+            type='font-awesome'/> ,
+            tabBarOnPress:({navigation})=>{
+                navigation.navigate("SharedFiles")
+           }
         }
     },
     Upload:{screen:()=>null,
         navigationOptions:{
+          // tabBarLabel:"Upload",
+            tabBarIcon:({tintColor})=>
            
-            tabBarIcon:()=><Icon
-            reverse
-            color="#00BFFF"
-            size={12}
+              <Icon
+           
+            color={tintColor}
+            size={22}
             name='upload'
-            type='font-awesome'/>,
+            type='font-awesome'/> 
+            ,
             tabBarOnPress:({navigation})=>{console.log("pressed");
                                  sendDocument(navigation);  }
         }
@@ -166,10 +203,9 @@ const BottomTab = createMaterialBottomTabNavigator({
 },{
     initialRouteName: 'Home',
     activeColor:"#f0edf6",
-  inactiveColor:"#3e2465",
-    barStyle: { backgroundColor: '#fff',padding:15 },
-    labeled:false,
-    backBehavior:"history",
+    inactiveColor:"#3e2465",
+    barStyle: { backgroundColor: '#694fad'},
+   
 
   }
 )
@@ -194,17 +230,40 @@ const StackNavigator = createStackNavigator({
             animationEnabled:true,
             
         } ,
-        
-        
     },
-    Folder:{
-       screen:Folder,
-           
-    }
+        Folder:{
+            screen:Folder,
+            navigationOptions:({navigation})=>({
+             title:`${navigation.state.params.name}`
+            }),
+            path:'folder/:name' ,  
+         },
+         ShareFile:{
+            screen:ShareFile,
+            navigationOptions:{
+                headerShown:false,
+                animationEnabled:true
+            }
+        },
+        SharedFiles:{
+            screen:Shared,
+            navigationOptions:{
+                animationEnabled:true,
+                title:"Shared"
+            }
+        }
+   
+    
 },{
     mode:"modal",
+
     
 })
 
+
 export default createAppContainer(StackNavigator) ;
 
+/*
+
+   
+*/ 

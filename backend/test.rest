@@ -1,20 +1,26 @@
 ###
-POST   http://localhost:3000/store/folder
+POST   http://localhost:3000/file
 Content-Type: application/json
 
 {
-   "user":"123456",
-   "folder":"hello"
+   "userId":"6028dfd9dcd0c8335c7bc649",
+   "folderId":"6028dfd9dcd0c8335c7bc649",
+   "name":"hell0.pdf",
+   "type":"pdf",
+   "url":"req.body.url", 
+   "filename":"req.body.filename"
    
 }
 
 
 
-5fe47e8efa98862ba422c9b6
+//home 6028dfd9dcd0c8335c7bc64
 
-
-
+//user 6028dfd9dcd0c8335c7bc647
 
 ###
-Get http://localhost:3000/store/folder
+DELETE http://localhost:3000/file/60290908971d4d304cacec8
+###
+Get http://localhost:3000/file/6028dfd9dcd0c8335c7bc648
+
 

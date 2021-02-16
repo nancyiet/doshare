@@ -13,7 +13,7 @@ export const CustomBtn = ({onPress,title,disable})=>{
 const styles = StyleSheet.create({
     btnContainer:{
         elevation: 8,
-        backgroundColor: "#00BFFF",
+        backgroundColor: "#694fad",
         borderRadius: 10,
         paddingVertical: 10,
         paddingHorizontal: 20,
@@ -24,7 +24,7 @@ const styles = StyleSheet.create({
     color: "#fff",
     alignSelf: "center",
     textTransform: "uppercase",
-    fontFamily:"caveat-bold",
+    fontFamily:"Lora-Bold",
     },
     disableContainer:{
         elevation: 8,

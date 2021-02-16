@@ -25,7 +25,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
   
    const [{user},dispatch] = useStateValue();
    const [{folders,files},dispatch1]=useFolderValue();
-  
+   
    React.useEffect(()=>{
 
     async function getUser()
@@ -41,6 +41,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
           })
            GetFolders(JSON.parse(user),dispatch1);
           GetFiles(JSON.parse(user),dispatch1)
+         
           console.log('1',folders,files);
         }
        }
@@ -53,8 +54,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
     
    },[])
   
-        
-        return user?<Navigator/>:<Login/>
+      // return <Navigator/>
+        return user?<Navigator/>:<Login/>;
      
        
       

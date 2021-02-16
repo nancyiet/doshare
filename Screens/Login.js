@@ -1,11 +1,14 @@
 import React from "react";
-import {Text,StyleSheet,View,Button} from "react-native";
+import {Text,StyleSheet,View,Button,Image, PermissionsAndroid} from "react-native";
 import Util from "../globalStylesheet/Util";
-//import CustomBtn from "../Components/CustomBtn";
+import CustomBtn from "../Components/CustomBtn";
 import {useStateValue} from "../Context/Usercontext";
 import {ANDROIDCLIENTID,CLIENTID} from "../secret.js";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {GoogleSignin,GoogleSigninButton,statusCodes} from "@react-native-community/google-signin";
+import {Notify} from "../Context/Action";
+import {Icon} from "react-native-elements";
+
 GoogleSignin.configure({
   webClientId:CLIENTID,
   offlineAccess:true,
@@ -15,21 +18,23 @@ GoogleSignin.configure({
 export default function Login({navigation}){
     
     const [{user},dispatch]=useStateValue();
-
+      
+   
     const saveUserToDB= async(user)=>{
        
       try{
-        await fetch("http://10.0.2.2:3000/user",{
+        await fetch("http://192.168.43.108:3000/user",{
           method:"POST",
           headers:{"Content-Type":"application/json"},
           body:JSON.stringify(user),
         }).then(res=>res.json())
         .then(data=>{
+
           dispatch({
             type:"SET_USER",
             user:data,
         })
-       
+      
         try{
 
            AsyncStorage.setItem('user',JSON.stringify(data));
@@ -62,7 +67,7 @@ export default function Login({navigation}){
        try{
            await GoogleSignin.hasPlayServices();
            const userInfo = await GoogleSignin.signIn();
-           alert("welcome "+userInfo.user.name);
+           Notify("DoShare",`welcome ${userInfo.user.name}`);
           saveUserToDB(userInfo.user);
           
        }
@@ -80,17 +85,17 @@ export default function Login({navigation}){
        } 
     }
     return(
-    <View style={Util.container}>
+    <View style={styles.container}>
      <View style={styles.subContainer}>
-         <View style={{width:120}}>
+       <Icon reverse type="feather" name="share-2" color="#694fad" size={40}/>
+         <View >
          <Text style={styles.textStyle}>DoShare</Text>
          </View>
-   <GoogleSigninButton 
-   onPress={signIn}
-   size={GoogleSigninButton.Size.Wide}
-   color={GoogleSigninButton.Color.Light}
-  
-   />
+        
+         <CustomBtn title="SIGN IN WITH GOOGLE" onPress={signIn} disable={false}/>
+        
+       
+   
     </View>
     </View>
     );
@@ -99,23 +104,25 @@ export default function Login({navigation}){
 const styles = StyleSheet.create({
     container:{
         flex:1,
-       
+        alignItems:"center",
+        justifyContent:"center",
+        backgroundColor:"#fff",
         flexDirection:"column",
         
     },
     subContainer:{
         alignItems:"center",
         justifyContent:"center",
-        flex:1,
-        width:"100%",
         
+        width:"100%",
+       
     },
     textStyle:{
-        fontFamily:"caveat-bold",
-        fontSize:35,
-        color:"#00BFFF",
+        fontFamily:"Lora-Bold",
+        fontSize:30,
+        color:"#694fad",
         marginVertical:20,
-        
-        
-    }
+          
+    },
+    
 })

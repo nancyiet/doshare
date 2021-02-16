@@ -14,7 +14,7 @@ export const CreateFolder = ({navigation})=>{
      const handleCreate= async()=>{
         console.log(folder +"in modal");
         try{
-            await fetch("http://10.0.2.2:3000/store/folder",{
+            await fetch("http://192.168.43.108:3000/folder",{
               method:"POST",
               headers:{"Content-Type":"application/json"},
               body:JSON.stringify({
@@ -22,10 +22,10 @@ export const CreateFolder = ({navigation})=>{
                   folder
               }),
             }).then(res=>res.json())
-            .then(data=>{console.log('data',data);
-                    if(data)
+            .then(folder=>{console.log('data',folder.data);
+                    if(folder?.data)
                     {
-                        navigation.navigate('Home',{folder:data});
+                        navigation.navigate('Home',{folder:folder.data});
                     }       
                
              });
@@ -42,7 +42,10 @@ export const CreateFolder = ({navigation})=>{
    <Modal visible={open} animationType="slide" >
             <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.modal}>
-         <Text style={styles.textStyle}>Create Folder</Text>
+            <View >
+            <Text style={styles.textStyle}>Create Folder</Text>
+            </View>
+        
          <TextInput 
          style={styles.input}
          onChangeText={text=>setFolder(text)}
@@ -76,7 +79,7 @@ const styles = StyleSheet.create({
         borderRadius:6,
         alignSelf:"center",
         fontSize:16,
-        fontFamily:"caveat-regular",
+        fontFamily:"Lora-Regular",
         margin:20,
 
     },
@@ -88,9 +91,10 @@ const styles = StyleSheet.create({
        
     },
     textStyle:{
-        fontFamily:"caveat-bold",
+        fontFamily:"Lora-Bold",
         fontSize:24,
         marginVertical:10,
+        color:"#3e2465"
     },
     btnGroup:{
 
